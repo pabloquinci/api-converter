@@ -1,13 +1,18 @@
 package com.possumus.apiconverter.service;
 
+import com.possumus.apiconverter.dto.ConversionADecimalResponseDTO;
 import com.possumus.apiconverter.dto.ConversionDTO;
 import com.possumus.apiconverter.dto.ConversionResponseDTO;
+import com.possumus.apiconverter.exception.ErrorResponse;
+import com.possumus.apiconverter.exception.NumeroInvalidoException;
+import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.thymeleaf.expression.Lists;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class ConversionServiceImpl implements ConversionService {
@@ -16,14 +21,14 @@ public class ConversionServiceImpl implements ConversionService {
     Map<Integer, String> decimalRomanoValues;
 
     @Autowired
-    Map<String, Integer>precedenciaSimbolos ;
+    Map<Character, Integer>precedenciaSimbolos ;
 
     @Override
     public Optional<ConversionResponseDTO> convertDecimalRomano(Integer valorDecimal) {
-        ConversionResponseDTO responseDTO = ConversionResponseDTO.builder().build();
         int divisor=(int)Math.pow(Double.valueOf(10.0),Double.valueOf(valorDecimal.toString().length())-1);
         StringBuilder valorRomano = new StringBuilder();
-        int valorEntero;
+        int valorEntero=0;
+        if(valorDecimal < 0) throw new NumeroInvalidoException(ErrorResponse.builder().message("ERROR: se ha ingresado un numero negativo").build());
         if(decimalRomanoValues.containsKey(valorDecimal)){
             return Optional.of(ConversionResponseDTO.builder().convertedValue(decimalRomanoValues.get(valorDecimal)).build());
 
@@ -41,38 +46,39 @@ public class ConversionServiceImpl implements ConversionService {
             divisor = divisor / 10;
         }
         valorRomano.append(decimalRomanoValues.get(valorDecimal));
-
         return Optional.of(ConversionResponseDTO.builder().convertedValue(valorRomano.toString()).build());
     }
 
+
+    public Boolean cadenaValida(String value){
+        return value.chars()
+                .mapToObj(c -> (char) c)
+                .toList().stream().allMatch(character -> precedenciaSimbolos.containsKey(character));
+    }
+
     @Override
-    public Optional<ConversionResponseDTO> convertRomanoDecimal(String value) {
+    public Optional<ConversionADecimalResponseDTO> convertRomanoDecimal(String value) {
         //MMMCCCI OK
         //CCMMMCCI ERROR
         //IIMMMCCI ERROR
         //MMMCCIV OK
         //MMMCVIV
-        StringBuilder valorDecimal = new StringBuilder();
+        if(!cadenaValida(value)) throw new NumeroInvalidoException(ErrorResponse.builder().message("ERROR: se ha ingresado un numero con caracteres invalidos").build());
+        Integer valorDecimal =0;
+        Integer length = value.length();
 
-        int contadorMaxSimbolosSuma=3;
-        int contadorMaxSimbolosResta=1;
-        String cadenaAux= String.valueOf(value.charAt(value.length()-1));
-        for(int i=value.length()-1;i>0;i--){
-            cadenaAux=value.substring(i-1,value.length());
-            if(contadorMaxSimbolosSuma==0){
-                throw new NumberFormatException("Error: maximo de simbolos iguales superado");
+        for (int i = 0; i < length; i++) {
+            Integer valorActual = precedenciaSimbolos.get(value.charAt(i));
+            Integer valorSiguiente = (i + 1 < length) ? precedenciaSimbolos.get(value.charAt(i + 1)) : 0;
+
+            if (valorActual < valorSiguiente) {
+                valorDecimal -= valorActual;
+            } else {
+                valorDecimal += valorActual;
             }
-            if(precedenciaSimbolos.containsKey(cadenaAux)){
-                valorDecimal.append(precedenciaSimbolos.get(cadenaAux));
-            }else if (precedenciaSimbolos.containsKey(cadenaAux.charAt(i)) && precedenciaSimbolos.containsKey(cadenaAux.charAt(i-1))){
-                valorDecimal.append(precedenciaSimbolos.get(cadenaAux.charAt(i)).toString());
-                valorDecimal.append(precedenciaSimbolos.get(cadenaAux.charAt(i-1)).toString());
-            }
-            cadenaAux="";
-            i-=2;
+
         }
 
-
-        return Optional.of(ConversionResponseDTO.builder().convertedValue(valorDecimal.toString()).build());
+        return Optional.of(ConversionADecimalResponseDTO.builder().convertedValue(valorDecimal).build());
     }
 }

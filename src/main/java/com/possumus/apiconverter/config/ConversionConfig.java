@@ -34,25 +34,14 @@ public class ConversionConfig {
     }
 
     @Bean
-    public Map<String, Integer> precedenciaSimbolos(){
-        return Map.ofEntries(entry("",0),
-                entry("I",1),
-                entry("II",2),
-                entry("III",3),
-                entry("IV",4),
-                entry("V",5),
-                entry("VI",6),
-                entry("VII",7),
-                entry("VIII",8),
-                entry("IX",9),
-                entry("X",10),
-                entry("XL",40),
-                entry("L",50),
-                entry("XC",90),
-                entry("C",100),
-                entry("CD",400),
-                entry("D",500),
-                entry("CM",900),
-                entry("M",1000));
+    public Map<Character, Integer> precedenciaSimbolos(){
+        return Map.ofEntries(
+                entry('I',1),
+                entry('V',5),
+                entry('X',10),
+                entry('L',50),
+                entry('C',100),
+                entry('D',500),
+                entry('M',1000));
     }
 }

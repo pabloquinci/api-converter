@@ -9,9 +9,9 @@ import lombok.Setter;
 @Builder
 public class NumeroInvalidoException extends RuntimeException{
 
-    private String mensajeError;
-    public NumeroInvalidoException(String mensajeError){
+    private ErrorResponse error;
+    public NumeroInvalidoException(ErrorResponse error){
         super();
-        this.mensajeError=mensajeError;
+        this.error=error;
     }
 }
