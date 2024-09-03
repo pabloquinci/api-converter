@@ -54,3 +54,4 @@ Deploy local (en la raiz del proyecto se encuentra el archivo .yaml):
     - Mockito
     - Jacoco
     - Docker
+
