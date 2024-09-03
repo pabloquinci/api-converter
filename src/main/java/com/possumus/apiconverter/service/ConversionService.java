@@ -1,7 +1,6 @@
 package com.possumus.apiconverter.service;
 
 import com.possumus.apiconverter.dto.ConversionADecimalResponseDTO;
-import com.possumus.apiconverter.dto.ConversionDTO;
 import com.possumus.apiconverter.dto.ConversionResponseDTO;
 
 import java.util.Optional;

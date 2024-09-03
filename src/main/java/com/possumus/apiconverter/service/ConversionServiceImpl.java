@@ -1,59 +1,79 @@
 package com.possumus.apiconverter.service;
 
 import com.possumus.apiconverter.dto.ConversionADecimalResponseDTO;
-import com.possumus.apiconverter.dto.ConversionDTO;
 import com.possumus.apiconverter.dto.ConversionResponseDTO;
 import com.possumus.apiconverter.exception.ErrorResponse;
 import com.possumus.apiconverter.exception.NumeroInvalidoException;
-import org.apache.tomcat.util.http.fileupload.util.Streams;
+import lombok.extern.java.Log;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.thymeleaf.expression.Lists;
 
 import java.util.*;
 
 @Service
+@Log
 public class ConversionServiceImpl implements ConversionService {
 
-    @Autowired
+   // @Autowired
     Map<Integer, String> decimalRomanoValues;
 
+   // @Autowired
+    Map<Character, Integer> romanoDecimalValues;
+
     @Autowired
-    Map<Character, Integer>precedenciaSimbolos ;
+    public ConversionServiceImpl(Map<Integer, String> decimalRomanoValues, Map<Character, Integer> romanoDecimalValues) {
+        this.decimalRomanoValues = decimalRomanoValues;
+        this.romanoDecimalValues = romanoDecimalValues;
+    }
+
+    public static Integer DIVISOR=1000;
+    public static Integer OFFSET_DIVISOR=10;
+
 
     @Override
     public Optional<ConversionResponseDTO> convertDecimalRomano(Integer valorDecimal) {
-        int divisor=(int)Math.pow(Double.valueOf(10.0),Double.valueOf(valorDecimal.toString().length())-1);
+        log.info("Servicio Conversion de valor Decimal a Romano");
         StringBuilder valorRomano = new StringBuilder();
-        int valorEntero=0;
-        if(valorDecimal < 0) throw new NumeroInvalidoException(ErrorResponse.builder().message("ERROR: se ha ingresado un numero negativo").build());
-        if(decimalRomanoValues.containsKey(valorDecimal)){
-            return Optional.of(ConversionResponseDTO.builder().convertedValue(decimalRomanoValues.get(valorDecimal)).build());
+        Integer divisor = DIVISOR;
+        List<Map.Entry<Integer, String>> entradas = decimalRomanoValues.entrySet().stream().toList();
+        Integer i = decimalRomanoValues.size() - 1;
+        Integer divisorActual = divisor;
+        Integer valorSuperior = 0;
+        Integer valorInferior = 0;
 
+        if (String.valueOf(valorDecimal).length() >= 4) {
+            valorRomano.append(Strings.repeat("M", valorDecimal / 1000));
+            valorDecimal = valorDecimal % 1000;
         }
-        while (valorDecimal > divisor){
-                if ((valorDecimal / divisor) != 0) {
-                    valorEntero=valorDecimal-(valorDecimal%divisor);
-                    if((valorEntero / divisor!=9) && (valorEntero / divisor!=4) &&(valorEntero / divisor!=5)){
-                        String concat= divisor==1000 ?"M" :decimalRomanoValues.get(valorEntero/(valorDecimal/divisor));
-                        concat=concat.repeat(valorDecimal/divisor);
-                        valorRomano.append(concat);
-                    }else valorRomano.append(decimalRomanoValues.get(valorEntero));
-                }
-            valorDecimal = valorDecimal % divisor;
-            divisor = divisor / 10;
+
+        while (valorDecimal >= OFFSET_DIVISOR) {
+            valorSuperior = entradas.get(i).getKey();
+            valorInferior = entradas.get(i - 1).getKey();
+            divisorActual = String.valueOf(valorSuperior).length() > String.valueOf(valorInferior).length() ? divisorActual / 10 : divisorActual;
+            Integer valorActual = (valorDecimal / divisorActual) * divisorActual;
+            if (valorActual < valorInferior) {
+                i--;
+                continue;
+            }
+
+            String valorRomanoActual = ((valorActual - valorInferior) / divisorActual) > 3
+                    ? decimalRomanoValues.get(divisorActual) + decimalRomanoValues.get(valorSuperior)
+                    : decimalRomanoValues.get(valorInferior) + Strings.repeat(decimalRomanoValues.get(divisorActual), (valorActual - valorInferior) / divisorActual);
+            valorRomano.append(valorRomanoActual);
+            divisor = divisor / OFFSET_DIVISOR;
+            valorDecimal = valorDecimal % divisorActual;
+            i--;
         }
         valorRomano.append(decimalRomanoValues.get(valorDecimal));
         return Optional.of(ConversionResponseDTO.builder().convertedValue(valorRomano.toString()).build());
+
     }
 
-
-    public Boolean cadenaValida(String value){
+    public Boolean cadenaValida(String value) {
         return value.chars()
                 .mapToObj(c -> (char) c)
-                .toList().stream().allMatch(character -> precedenciaSimbolos.containsKey(character));
+                .toList().stream().allMatch(character -> romanoDecimalValues.containsKey(character));
     }
 
     @Override
@@ -63,13 +83,16 @@ public class ConversionServiceImpl implements ConversionService {
         //IIMMMCCI ERROR
         //MMMCCIV OK
         //MMMCVIV
-        if(!cadenaValida(value)) throw new NumeroInvalidoException(ErrorResponse.builder().message("ERROR: se ha ingresado un numero con caracteres invalidos").build());
-        Integer valorDecimal =0;
+        log.info("Servicio Conversion de valor Romano a Decimal");
+
+        if (!cadenaValida(value))
+            throw new NumeroInvalidoException(ErrorResponse.builder().message("ERROR: se ha ingresado un numero con caracteres invalidos").build());
+        Integer valorDecimal = 0;
         Integer length = value.length();
 
         for (int i = 0; i < length; i++) {
-            Integer valorActual = precedenciaSimbolos.get(value.charAt(i));
-            Integer valorSiguiente = (i + 1 < length) ? precedenciaSimbolos.get(value.charAt(i + 1)) : 0;
+            Integer valorActual = romanoDecimalValues.get(value.charAt(i));
+            Integer valorSiguiente = (i + 1 < length) ? romanoDecimalValues.get(value.charAt(i + 1)) : 0;
 
             if (valorActual < valorSiguiente) {
                 valorDecimal -= valorActual;
