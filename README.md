@@ -39,11 +39,11 @@ Para los puntos plus de cada fase, en lo relacionado a la infraestructura de tes
 
 ### NOTAS
 
-Compilacion y ejecucion de tests: 
-   # - mvn clean install
+ # Compilacion y ejecucion de tests: 
+   - mvn clean install
 
-Deploy local (en la raiz del proyecto se encuentra el archivo .yaml):
-   # docker-compose -f docker-compose.yml up -d
+ # Deploy local (en la raiz del proyecto se encuentra el archivo .yaml):
+   docker-compose -f docker-compose.yml up -d
 
 - Tecnologias:
 
