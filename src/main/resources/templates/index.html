@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="ISO-8859-1">
+    <title>Employee</title>
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+          integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+          crossorigin="anonymous">
+</head>
+<body>
+<div class="container my-2" align="center">
+
+    <h3>Conversor Decimal / Romano</h3>
+    <table style="width:80%" border="1"
+           class = "table table-striped table-responsive-md">
+        <thead>
+        <tr>
+            <th>Valor</th>
+            <th>Resultado</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+        <input type="number" id="value" th:value="${value}" min="10" max="100" />
+        <td th:text="${valueConverted}"></td>
+        <a th:href="@{http://localhost:8080/api/conversions/convert/{value}(value = ${value})}"
+           class="btn btn-primary">Update</a>
+        </tbody>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,9 @@
+#version: "4.0"
+services:
+  api-converter:
+    #container_name: api-cliente
+    build:
+      #context:
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
